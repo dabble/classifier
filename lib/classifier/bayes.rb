@@ -64,7 +64,7 @@ class Bayes
 	# The largest of these scores (the one closest to 0) is the one picked out by #classify
 	def classifications(text)
 		score = Hash.new
-		training_count = @category_counts.values.inject { |x,y| x+y }.to_f
+		training_count = @category_counts.values.inject(0.0) { |sum, element| sum + element }
 		@categories.each do |category, category_words|
 			score[category.to_s] = 0
 			total = category_words.values.inject(0) {|sum, element| sum+element}
