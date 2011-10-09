@@ -13,6 +13,7 @@ class Bayes
 		categories.each { |category| @categories[category.prepare_category_name] = Hash.new }
 		@total_words = 0
 		@category_word_count = Hash.new()
+		@category_counts = Hash.new(0)
 	end
 
 	#
@@ -25,6 +26,7 @@ class Bayes
 	def train(category, text)
 		category = category.prepare_category_name
 		@category_word_count[category] ||= 0
+		@category_counts[category] += 1
 
 		text.word_hash.each do |word, count|
 			@categories[category][word]     ||=     0
@@ -45,6 +47,7 @@ class Bayes
 	def untrain(category, text)
 		category = category.prepare_category_name
 		@category_word_count[category] ||= 0
+		@category_counts[category] -= 1
 
 		text.word_hash.each do |word, count|
 			if @total_words >= 0
@@ -72,6 +75,8 @@ class Bayes
 	def classifications(text)
 		score = Hash.new
 		word_hash = text.word_hash
+		training_count = @category_counts.values.inject(0.0) { |sum, element| sum + element }
+
 		@categories.each do |category, category_words|
 			score[category.to_s] = 0
 			total = (@category_word_count[category] || 1).to_f
@@ -79,6 +84,9 @@ class Bayes
 				s = category_words.has_key?(word) ? category_words[word] : 0.1
 				score[category.to_s] += Math.log(s/total)
 			end
+			# now add prior probability for the category
+			s = @category_counts.has_key?(category) ? @category_counts[category] : 0.1
+			score[category.to_s] += Math.log(s / training_count)
 		end
 		return score
 	end
